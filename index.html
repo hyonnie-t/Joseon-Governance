@@ -261,8 +261,32 @@
       <p id="rewardCardName" class="font-bold text-lg text-joseon-navy font-batang"></p>
       <p id="rewardCardDesc" class="text-xs text-gray-600 px-2"></p>
 
-      <button onclick="closeRewardModal()" class="w-full py-3 bg-joseon-red text-white font-bold rounded-xl shadow-md hover:bg-red-900 transition">
+      <button onclick="proceedToPadlet()" class="w-full py-3 bg-joseon-red text-white font-bold rounded-xl shadow-md hover:bg-red-900 transition">
         보물상자에 저장하기
+      </button>
+    </div>
+  </div>
+
+  <!-- Padlet Modal: 마무리 글쓰기를 반 패들렛에도 옮겨 적게 유도 (webapp-builder 표준) -->
+  <div id="padletModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+    <div class="bg-joseon-paper rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl border-4 border-joseon-navy text-center">
+      <div class="text-xs font-bold text-joseon-navy uppercase tracking-widest">One More Step</div>
+      <h3 class="font-bold text-xl text-joseon-navy font-batang">📌 우리 반 패들렛에도 올려보자</h3>
+      <p class="text-sm text-gray-600 px-2">방금 쓴 글을 복사해서 우리 반 패들렛에 붙여넣어줘.</p>
+
+      <button id="copyWritingBtn" onclick="copyWritingToClipboard()"
+              class="w-full py-3 bg-joseon-navy hover:bg-slate-800 text-white font-bold rounded-xl shadow-md active:scale-95 transition min-h-[48px]">
+        📋 내 글 복사하기
+      </button>
+
+      <a id="openPadletLink" href="#" target="_blank" rel="noopener"
+         class="hidden items-center justify-center w-full py-3 bg-joseon-red hover:bg-red-900 text-white font-bold rounded-xl shadow-md active:scale-95 transition min-h-[48px]">
+        🔗 우리 반 패들렛 열기
+      </a>
+      <p id="padletMissingNote" class="hidden text-xs text-gray-500">담당 반 패들렛 링크를 찾지 못했어요. 선생님께 확인해주세요.</p>
+
+      <button onclick="closePadletModal()" class="w-full py-2 text-sm text-gray-500 font-bold hover:text-gray-700 transition">
+        나중에 할게요
       </button>
     </div>
   </div>
@@ -273,6 +297,14 @@
     const CONFIG = {
       SHEET_WEBAPP_URL: 'https://script.google.com/macros/s/AKfycbyXSjCfWY_HiZFqW_OBR-FQDoIfF1z_STqyKWUI31MacHeY3u7hbirFSFDvW-5yuUHaJQ/exec',
       GAME_NAME: '조선통치체제_가챠글쓰기'
+    };
+
+    // 1-1. PADLET 연계 (3학년 5~8반 전용, webapp-builder 스킬 표준 링크)
+    const PADLET_URLS = {
+      5: 'https://padlet.com/dy_sch03/2026-2-3-5-cewq8vec8p3ew2yn',
+      6: 'https://padlet.com/dy_sch03/2026-2-3-6-2xngg3v8pstkvld9',
+      7: 'https://padlet.com/dy_sch03/2026-2-3-7-8ssvnriy75f7xwxs',
+      8: 'https://padlet.com/dy_sch03/2026-2-3-8-gsrz2i3ca863675l'
     };
 
     // 2. CORE WORDS DATA (Weighted Cumulative Math)
@@ -323,7 +355,8 @@
       selectedGeneral: null,
       isSubmitting: false,
       isPreview: false,
-      userGallery: []
+      userGallery: [],
+      lastWriting: ''
     };
 
     // 6. HELPER & UTILITY FUNCTIONS
@@ -355,6 +388,37 @@
 
     function getRandomArrayItem(arr) {
       return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    // sid(5자리: 학년1+반2+번호2)에서 반을 뽑아 그 반 패들렛 URL을 돌려준다. 없으면 null.
+    function getPadletUrlForSid_(sid) {
+      if (!/^\d{5}$/.test(sid)) return null;
+      const ban = parseInt(sid.substring(1, 3), 10);
+      return PADLET_URLS[ban] || null;
+    }
+
+    // 클립보드 API가 막힌 환경(비보안 컨텍스트 등)을 대비한 execCommand 폴백.
+    function copyToClipboard_(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+      }
+      return new Promise((resolve, reject) => {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          resolve();
+        } catch (err) {
+          reject(err);
+        } finally {
+          document.body.removeChild(textarea);
+        }
+      });
     }
 
     // 재시도 헬퍼: 3회·700ms 간격 (history26 포털 fetchJsonRetry_ 관례와 동일).
@@ -574,6 +638,51 @@
       modal.classList.remove('flex');
     }
 
+    // 보상 모달 닫기 -> 패들렛 공유 안내로 이어간다.
+    function proceedToPadlet() {
+      closeRewardModal();
+      openPadletModal();
+    }
+
+    function openPadletModal() {
+      const modal = document.getElementById('padletModal');
+      const link = document.getElementById('openPadletLink');
+      const missingNote = document.getElementById('padletMissingNote');
+      const url = getPadletUrlForSid_(state.sid);
+
+      link.classList.remove('hidden', 'flex');
+      if (url) {
+        link.href = url;
+        link.classList.add('flex');
+        missingNote.classList.add('hidden');
+      } else {
+        link.classList.add('hidden');
+        missingNote.classList.remove('hidden');
+      }
+
+      document.getElementById('copyWritingBtn').innerText = '📋 내 글 복사하기';
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closePadletModal() {
+      const modal = document.getElementById('padletModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function copyWritingToClipboard() {
+      const btn = document.getElementById('copyWritingBtn');
+      copyToClipboard_(state.lastWriting)
+        .then(() => {
+          btn.innerText = '✅ 복사 완료! 패들렛에 붙여넣기 하세요';
+        })
+        .catch(() => {
+          alert('복사에 실패했습니다. 아래 글을 직접 선택해서 복사해주세요:\n\n' + state.lastWriting);
+        });
+    }
+
     // 10. FORM SUBMISSION
     function submitWriting() {
       const writing = document.getElementById('writingInput').value.trim();
@@ -583,6 +692,7 @@
         return;
       }
 
+      state.lastWriting = writing;
       const rewardItem = getWeightedRandomGachaItem();
 
       const payload = {
