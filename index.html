@@ -26,14 +26,14 @@
   </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
-    
+
     body {
       font-family: 'Noto Sans KR', sans-serif;
       background-color: #f3efe6;
       color: #2c2925;
       -webkit-text-size-adjust: 100%;
     }
-    
+
     .font-batang {
       font-family: 'Gowun Batang', serif;
     }
@@ -51,7 +51,7 @@
     .gacha-card {
       transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    
+
     .gacha-card:hover {
       transform: translateY(-3px);
     }
@@ -62,139 +62,177 @@
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between p-3 sm:p-5 max-w-4xl mx-auto">
+<body class="bg-[#f3efe6]">
 
-  <!-- Header -->
-  <header class="bg-joseon-navy text-joseon-paper rounded-2xl p-4 sm:p-6 shadow-lg border-b-4 border-joseon-gold mb-4">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+  <!-- Login Confirm Screen: 포털에서 넘어온 학번/이름을 바로 본문에 흘려보내지 않고
+       반드시 확인 절차를 거치게 한다 (webapp-builder 스킬 필수 항목) -->
+  <div id="loginConfirmView" class="min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-xl border-2 border-joseon-gold text-center space-y-5">
       <div>
-        <span class="inline-block bg-joseon-gold text-joseon-navy text-xs font-bold px-3 py-1 rounded-full mb-1">
+        <span class="inline-block bg-joseon-gold text-joseon-navy text-xs font-bold px-3 py-1 rounded-full mb-2">
           Ⅳ. 조선의 성립과 발전
         </span>
-        <h1 class="text-xl sm:text-2xl font-bold font-batang tracking-tight">
+        <h1 class="text-xl font-bold font-batang text-joseon-navy leading-snug">
           🏛️ 조선 통치체제 & 사대교린 가챠 글쓰기
         </h1>
       </div>
-      <div id="previewBadge" class="hidden bg-amber-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shrink-0">
+
+      <div id="loginAutoFilled" class="hidden space-y-3">
+        <p class="text-sm text-gray-600">아래 정보로 입장합니다. 본인이 맞는지 확인해주세요.</p>
+        <div class="bg-joseon-card rounded-xl p-4 space-y-1.5 border border-joseon-border">
+          <p class="text-sm"><span class="font-bold text-joseon-navy">학번</span> <span id="loginSidDisplay" class="font-mono font-bold ml-1"></span></p>
+          <p class="text-sm"><span class="font-bold text-joseon-navy">이름</span> <span id="loginNameDisplay" class="font-bold ml-1"></span></p>
+        </div>
+      </div>
+
+      <div id="loginManualEntry" class="hidden space-y-3 text-left">
+        <p class="text-sm text-gray-600 text-center">포털에서 전달된 정보가 없습니다. 학번과 이름을 직접 입력하세요.</p>
+        <div>
+          <label for="loginSidInput" class="text-sm font-bold block mb-1">학번 (5자리)</label>
+          <input type="text" id="loginSidInput" inputmode="numeric" maxlength="5" placeholder="30512"
+                 class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-joseon-navy focus:outline-none text-center font-mono font-bold">
+        </div>
+        <div>
+          <label for="loginNameInput" class="text-sm font-bold block mb-1">이름</label>
+          <input type="text" id="loginNameInput" placeholder="홍길동"
+                 class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-joseon-navy focus:outline-none text-center font-bold">
+        </div>
+      </div>
+
+      <div id="previewBadgeLogin" class="hidden bg-amber-500 text-white text-xs font-bold px-3 py-1.5 rounded-full inline-block">
         🔍 미리보기 모드 (?preview=1)
       </div>
-    </div>
-  </header>
 
-  <!-- Main Content -->
-  <main class="space-y-4 flex-1">
-
-    <!-- Student Info Form Bar -->
-    <section class="bg-white p-4 rounded-xl shadow-md border border-joseon-border flex flex-col sm:flex-row gap-3 items-center justify-between">
-      <div class="flex items-center gap-2 w-full sm:w-auto">
-        <label for="studentId" class="text-sm font-bold w-14 shrink-0">학번:</label>
-        <input type="text" id="studentId" inputmode="numeric" maxlength="5" placeholder="30512" 
-               class="w-full sm:w-32 p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-joseon-navy focus:outline-none text-center font-mono font-bold">
-      </div>
-      <div class="flex items-center gap-2 w-full sm:w-auto">
-        <label for="studentName" class="text-sm font-bold w-14 shrink-0">이름:</label>
-        <input type="text" id="studentName" placeholder="홍길동" 
-               class="w-full sm:w-36 p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-joseon-navy focus:outline-none text-center font-bold">
-      </div>
-      <div class="text-xs text-gray-500 text-center sm:text-right w-full sm:w-auto">
-        * 학번 5자리 (학년1+반2+번호2)
-      </div>
-    </section>
-
-    <!-- Word Draw Section -->
-    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      
-      <!-- Core Word Slot (Weighted) -->
-      <div class="bg-joseon-card p-4 sm:p-5 rounded-2xl border-2 border-joseon-border shadow-sm flex flex-col justify-between min-h-[220px]">
-        <div>
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-xs font-bold bg-joseon-red text-white px-2.5 py-1 rounded-md">조선 핵심 단어 (가중치)</span>
-            <span id="coreRarity" class="text-xs font-bold text-gray-500">뽑기 대기 중</span>
-          </div>
-          <div id="coreSlot" class="bg-white rounded-xl p-4 my-2 text-center border border-amber-200 min-h-[85px] flex flex-col justify-center items-center shadow-inner">
-            <p class="text-gray-400 text-sm">버튼을 눌러 핵심 단어를 뽑으세요</p>
-          </div>
-        </div>
-
-        <div class="space-y-2 mt-2">
-          <button id="drawCoreBtn" onclick="drawCoreWord()" 
-                  class="w-full py-3 bg-joseon-red hover:bg-red-900 text-white font-bold rounded-xl shadow-md active:scale-95 transition min-h-[48px]">
-            🎲 핵심 단어 뽑기
-          </button>
-          <button id="hintBtn" onclick="toggleHintModal()" class="hidden w-full py-2 bg-amber-100 text-amber-900 text-sm font-bold rounded-lg border border-amber-300 hover:bg-amber-200 transition">
-            💡 막막하면 힌트 보기
-          </button>
-        </div>
-      </div>
-
-      <!-- General Word Slot (Uniform) -->
-      <div class="bg-joseon-card p-4 sm:p-5 rounded-2xl border-2 border-joseon-border shadow-sm flex flex-col justify-between min-h-[220px]">
-        <div>
-          <div class="flex justify-between items-center mb-2">
-            <span class="text-xs font-bold bg-joseon-navy text-white px-2.5 py-1 rounded-md">현대 일상 단어 (비유용)</span>
-            <span class="text-xs font-bold text-gray-500">균등 확률 10%</span>
-          </div>
-          <div id="generalSlot" class="bg-white rounded-xl p-4 my-2 text-center border border-amber-200 min-h-[85px] flex flex-col justify-center items-center shadow-inner">
-            <p class="text-gray-400 text-sm">버튼을 눌러 일반 단어를 뽑으세요</p>
-          </div>
-        </div>
-
-        <div class="mt-2">
-          <button id="drawGeneralBtn" onclick="drawGeneralWord()" 
-                  class="w-full py-3 bg-joseon-navy hover:bg-slate-800 text-white font-bold rounded-xl shadow-md active:scale-95 transition min-h-[48px]">
-            🎲 일반 단어 뽑기
-          </button>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- Writing Container -->
-    <section class="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-joseon-border space-y-4">
-      <!-- Fixed Writing Rule Box -->
-      <div class="bg-amber-50 p-3.5 sm:p-4 rounded-xl border border-amber-200 text-sm sm:text-base leading-relaxed">
-        <span class="font-bold text-joseon-red">📌 글쓰기 조건:</span><br>
-        <p class="mt-1 text-gray-800 font-batang">
-          "뽑은 핵심 단어(<span id="condCore" class="font-bold text-joseon-red underline underline-offset-4 decoration-2">   </span>)가 없었다면 조선 정치에 어떤 문제가 생겼을지 써보고, 
-          일반 단어(<span id="condGeneral" class="font-bold text-joseon-navy underline underline-offset-4 decoration-2">   </span>)를 활용해 그 상황을 현대식으로 비유해봐."
-        </p>
-      </div>
-
-      <!-- Text Input -->
-      <div>
-        <textarea id="writingInput" rows="5" 
-                  placeholder="단어 2개를 모두 뽑은 후에 작성해 주세요."
-                  disabled
-                  class="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-joseon-navy focus:outline-none resize-y leading-relaxed text-base disabled:bg-gray-100 disabled:cursor-not-allowed"></textarea>
-        <div class="flex justify-between items-center mt-1 text-xs text-gray-500 px-1">
-          <span id="charCount">0자 작성됨</span>
-          <span>최소 10자 이상 필수 작성</span>
-        </div>
-      </div>
-
-      <!-- Submit Button -->
-      <button id="submitBtn" onclick="submitWriting()" disabled
-              class="w-full py-3.5 bg-gray-400 text-white font-bold rounded-xl shadow-lg transition min-h-[48px] cursor-not-allowed">
-        📜 글 제출하고 가챠 소품 수집하기
+      <button id="loginConfirmBtn" onclick="confirmLogin()"
+              class="w-full py-3 bg-joseon-red hover:bg-red-900 text-white font-bold rounded-xl shadow-md active:scale-95 transition min-h-[48px]">
+        확인했습니다, 시작하기
       </button>
-    </section>
+      <p id="loginError" class="hidden text-xs text-red-600 font-bold"></p>
+    </div>
+  </div>
 
-    <!-- Collection Gallery -->
-    <section class="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-joseon-border">
-      <h2 class="text-base font-bold text-joseon-navy mb-3 flex items-center gap-2 font-batang">
-        <span>🎨 나의 조선 소품 보물상자 Gallery</span>
-      </h2>
-      <div id="galleryContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        <!-- Rendered dynamically -->
+  <!-- App: 로그인 확인 전까지 숨김 -->
+  <div id="appView" class="hidden min-h-screen flex-col justify-between p-3 sm:p-5 max-w-4xl mx-auto">
+
+    <!-- Header -->
+    <header class="bg-joseon-navy text-joseon-paper rounded-2xl p-4 sm:p-6 shadow-lg border-b-4 border-joseon-gold mb-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <div>
+          <span class="inline-block bg-joseon-gold text-joseon-navy text-xs font-bold px-3 py-1 rounded-full mb-1">
+            Ⅳ. 조선의 성립과 발전
+          </span>
+          <h1 class="text-xl sm:text-2xl font-bold font-batang tracking-tight">
+            🏛️ 조선 통치체제 & 사대교린 가챠 글쓰기
+          </h1>
+        </div>
+        <div class="flex flex-col items-end gap-1 shrink-0">
+          <div id="previewBadge" class="hidden bg-amber-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+            🔍 미리보기 모드 (?preview=1)
+          </div>
+          <div id="loggedInBadge" class="bg-white/10 text-joseon-paper text-xs font-bold px-3 py-1.5 rounded-full"></div>
+        </div>
       </div>
-    </section>
+    </header>
 
-  </main>
+    <!-- Main Content -->
+    <main class="space-y-4 flex-1">
 
-  <!-- Footer -->
-  <footer class="mt-6 text-center text-xs text-gray-500 py-3">
-    history26 포털 표준 규격 · 조선 통치체제와 대외 관계 마무리 차시
-  </footer>
+      <!-- Word Draw Section -->
+      <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <!-- Core Word Slot (Weighted) -->
+        <div class="bg-joseon-card p-4 sm:p-5 rounded-2xl border-2 border-joseon-border shadow-sm flex flex-col justify-between min-h-[220px]">
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs font-bold bg-joseon-red text-white px-2.5 py-1 rounded-md">조선 핵심 단어 (가중치)</span>
+              <span id="coreRarity" class="text-xs font-bold text-gray-500">뽑기 대기 중</span>
+            </div>
+            <div id="coreSlot" class="bg-white rounded-xl p-4 my-2 text-center border border-amber-200 min-h-[85px] flex flex-col justify-center items-center shadow-inner">
+              <p class="text-gray-400 text-sm">버튼을 눌러 핵심 단어를 뽑으세요</p>
+            </div>
+          </div>
+
+          <div class="space-y-2 mt-2">
+            <button id="drawCoreBtn" onclick="drawCoreWord()"
+                    class="w-full py-3 bg-joseon-red hover:bg-red-900 text-white font-bold rounded-xl shadow-md active:scale-95 transition min-h-[48px]">
+              🎲 핵심 단어 뽑기
+            </button>
+            <button id="hintBtn" onclick="toggleHintModal()" class="hidden w-full py-2 bg-amber-100 text-amber-900 text-sm font-bold rounded-lg border border-amber-300 hover:bg-amber-200 transition">
+              💡 막막하면 힌트 보기
+            </button>
+          </div>
+        </div>
+
+        <!-- General Word Slot (Uniform) -->
+        <div class="bg-joseon-card p-4 sm:p-5 rounded-2xl border-2 border-joseon-border shadow-sm flex flex-col justify-between min-h-[220px]">
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs font-bold bg-joseon-navy text-white px-2.5 py-1 rounded-md">현대 일상 단어 (비유용)</span>
+              <span class="text-xs font-bold text-gray-500">균등 확률 10%</span>
+            </div>
+            <div id="generalSlot" class="bg-white rounded-xl p-4 my-2 text-center border border-amber-200 min-h-[85px] flex flex-col justify-center items-center shadow-inner">
+              <p class="text-gray-400 text-sm">버튼을 눌러 일반 단어를 뽑으세요</p>
+            </div>
+          </div>
+
+          <div class="mt-2">
+            <button id="drawGeneralBtn" onclick="drawGeneralWord()"
+                    class="w-full py-3 bg-joseon-navy hover:bg-slate-800 text-white font-bold rounded-xl shadow-md active:scale-95 transition min-h-[48px]">
+              🎲 일반 단어 뽑기
+            </button>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Writing Container -->
+      <section class="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-joseon-border space-y-4">
+        <!-- Fixed Writing Rule Box -->
+        <div class="bg-amber-50 p-3.5 sm:p-4 rounded-xl border border-amber-200 text-sm sm:text-base leading-relaxed">
+          <span class="font-bold text-joseon-red">📌 글쓰기 조건:</span><br>
+          <p class="mt-1 text-gray-800 font-batang">
+            "뽑은 핵심 단어(<span id="condCore" class="font-bold text-joseon-red underline underline-offset-4 decoration-2">   </span>)가 없었다면 조선 정치에 어떤 문제가 생겼을지 써보고,
+            일반 단어(<span id="condGeneral" class="font-bold text-joseon-navy underline underline-offset-4 decoration-2">   </span>)를 활용해 그 상황을 현대식으로 비유해봐."
+          </p>
+        </div>
+
+        <!-- Text Input -->
+        <div>
+          <textarea id="writingInput" rows="5"
+                    placeholder="단어 2개를 모두 뽑은 후에 작성해 주세요."
+                    disabled
+                    class="w-full p-3.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-joseon-navy focus:outline-none resize-y leading-relaxed text-base disabled:bg-gray-100 disabled:cursor-not-allowed"></textarea>
+          <div class="flex justify-between items-center mt-1 text-xs text-gray-500 px-1">
+            <span id="charCount">0자 작성됨</span>
+            <span>최소 10자 이상 필수 작성</span>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button id="submitBtn" onclick="submitWriting()" disabled
+                class="w-full py-3.5 bg-gray-400 text-white font-bold rounded-xl shadow-lg transition min-h-[48px] cursor-not-allowed">
+          📜 글 제출하고 가챠 소품 수집하기
+        </button>
+      </section>
+
+      <!-- Collection Gallery -->
+      <section class="bg-white p-4 sm:p-6 rounded-2xl shadow-md border border-joseon-border">
+        <h2 class="text-base font-bold text-joseon-navy mb-3 flex items-center gap-2 font-batang">
+          <span>🎨 나의 조선 소품 보물상자 Gallery</span>
+        </h2>
+        <div id="galleryContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <!-- Rendered dynamically -->
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-6 text-center text-xs text-gray-500 py-3">
+      history26 포털 표준 규격 · 조선 통치체제와 대외 관계 마무리 차시
+    </footer>
+
+  </div>
 
   <!-- Hint Modal -->
   <div id="hintModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
@@ -216,7 +254,7 @@
     <div class="bg-joseon-paper rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl border-4 border-joseon-gold text-center">
       <div class="text-xs font-bold text-joseon-red uppercase tracking-widest">Gacha Reward Unlocked!</div>
       <h3 class="font-bold text-xl text-joseon-navy font-batang">🎁 소품 카드를 획득했습니다!</h3>
-      
+
       <div id="rewardCardSlot" class="my-4">
       </div>
 
@@ -258,24 +296,29 @@
       '리모컨', '편의점', '알람', '우산', '배달', '와이파이', '급식', '지각', '알바', '게임기'
     ];
 
-    // 4. GACHA ITEMS (12 Joseon Artifacts)
+    // 4. GACHA ITEMS (12 Joseon Artifacts) — weight는 rarity 라벨과 실제 확률이 어긋나지 않도록
+    // 일반 20 / 희귀 10 / 영웅 4 / 전설 2로 등급별 차등을 둔다 (전설이 일반과 같은 확률이면 안 됨).
     const GACHA_ITEMS = [
-      { id: '01', name: '조선 갓', desc: '선비의 품격과 예의를 상징하는 모자', rarity: '일반' },
-      { id: '02', name: '곤룡포 키캡', desc: '조선 왕이 입던 붉은 집무복 모티브', rarity: '희귀' },
-      { id: '03', name: '청화백자 키링', desc: '푸른 빛깔의 기품 있는 조선 백자', rarity: '희귀' },
-      { id: '04', name: '마패 키링', desc: '암행어사의 신분증과 마필 이용권', rarity: '영웅' },
-      { id: '05', name: '경국대전 뱃지', desc: '조선의 기본 법전 모티브 뱃지', rarity: '희귀' },
-      { id: '06', name: '훈민정음 책자', desc: '백성을 사랑하는 마음이 담긴 한글', rarity: '전설' },
-      { id: '07', name: '해시계(앙부일구)', desc: '세종 대왕 시절의 오목해시계', rarity: '영웅' },
-      { id: '08', name: '측우기 소품', desc: '세계 최초의 표준 우량계 모티브', rarity: '희귀' },
-      { id: '09', name: '조선 수군 신기전', desc: '조선의 첨단 다연장 로켓 화기', rarity: '영웅' },
-      { id: '10', name: '호패 키캡', desc: '조선 시대의 주민등록증 키캡', rarity: '일반' },
-      { id: '11', name: '자격루 태엽기어', desc: '자동으로 시간을 알려주던 물시계', rarity: '영웅' },
-      { id: '12', name: '태조 이성계 어진', desc: '조선을 건국한 태조의 초상화', rarity: '전설' }
+      { id: '01', name: '조선 갓', desc: '선비의 품격과 예의를 상징하는 모자', rarity: '일반', weight: 20 },
+      { id: '02', name: '곤룡포 키캡', desc: '조선 왕이 입던 붉은 집무복 모티브', rarity: '희귀', weight: 10 },
+      { id: '03', name: '청화백자 키링', desc: '푸른 빛깔의 기품 있는 조선 백자', rarity: '희귀', weight: 10 },
+      { id: '04', name: '마패 키링', desc: '암행어사의 신분증과 마필 이용권', rarity: '영웅', weight: 4 },
+      { id: '05', name: '경국대전 뱃지', desc: '조선의 기본 법전 모티브 뱃지', rarity: '희귀', weight: 10 },
+      { id: '06', name: '훈민정음 책자', desc: '백성을 사랑하는 마음이 담긴 한글', rarity: '전설', weight: 2 },
+      { id: '07', name: '해시계(앙부일구)', desc: '세종 대왕 시절의 오목해시계', rarity: '영웅', weight: 4 },
+      { id: '08', name: '측우기 소품', desc: '세계 최초의 표준 우량계 모티브', rarity: '희귀', weight: 10 },
+      { id: '09', name: '조선 수군 신기전', desc: '조선의 첨단 다연장 로켓 화기', rarity: '영웅', weight: 4 },
+      { id: '10', name: '호패 키캡', desc: '조선 시대의 주민등록증 키캡', rarity: '일반', weight: 20 },
+      { id: '11', name: '자격루 태엽기어', desc: '자동으로 시간을 알려주던 물시계', rarity: '영웅', weight: 4 },
+      { id: '12', name: '태조 이성계 어진', desc: '조선을 건국한 태조의 초상화', rarity: '전설', weight: 2 }
     ];
 
     // 5. GLOBAL STATE (Declared before any action)
     let state = {
+      sid: '',
+      name: '',
+      pendingSid: '',
+      pendingName: '',
       selectedCore: null,
       selectedGeneral: null,
       isSubmitting: false,
@@ -287,7 +330,7 @@
     function getWeightedRandomCoreWord() {
       const totalWeight = CORE_WORDS.reduce((sum, item) => sum + item.weight, 0);
       let randomNum = Math.random() * totalWeight;
-      
+
       for (let item of CORE_WORDS) {
         if (randomNum < item.weight) {
           return item;
@@ -297,8 +340,35 @@
       return CORE_WORDS[0];
     }
 
+    function getWeightedRandomGachaItem() {
+      const totalWeight = GACHA_ITEMS.reduce((sum, item) => sum + item.weight, 0);
+      let randomNum = Math.random() * totalWeight;
+
+      for (let item of GACHA_ITEMS) {
+        if (randomNum < item.weight) {
+          return item;
+        }
+        randomNum -= item.weight;
+      }
+      return GACHA_ITEMS[0];
+    }
+
     function getRandomArrayItem(arr) {
       return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    // 재시도 헬퍼: 3회·700ms 간격 (history26 포털 fetchJsonRetry_ 관례와 동일).
+    // 재배포 직후 일시적 네트워크 실패를 흡수해 "제출은 됐는데 기록은 안 남는" 상황을 막는다.
+    function fetchJsonRetry_(url, options, retries, delayMs) {
+      retries = retries === undefined ? 3 : retries;
+      delayMs = delayMs === undefined ? 700 : delayMs;
+      return fetch(url, options)
+        .then(res => res.json())
+        .catch(err => {
+          if (retries <= 1) throw err;
+          return new Promise(resolve => setTimeout(resolve, delayMs))
+            .then(() => fetchJsonRetry_(url, options, retries - 1, delayMs));
+        });
     }
 
     function parseUrlParams() {
@@ -307,16 +377,60 @@
       const name = urlParams.get('name') || '';
       const preview = urlParams.get('preview') === '1';
 
-      if (sid) document.getElementById('studentId').value = sid;
-      if (name) document.getElementById('studentName').value = name;
-      
       state.isPreview = preview;
       if (preview) {
         document.getElementById('previewBadge').classList.remove('hidden');
+        document.getElementById('previewBadgeLogin').classList.remove('hidden');
+      }
+
+      if (sid && name) {
+        state.pendingSid = sid;
+        state.pendingName = name;
+        document.getElementById('loginSidDisplay').innerText = sid;
+        document.getElementById('loginNameDisplay').innerText = name;
+        document.getElementById('loginAutoFilled').classList.remove('hidden');
+      } else {
+        document.getElementById('loginManualEntry').classList.remove('hidden');
       }
     }
 
-    // 7. GACHA CORE LOGIC
+    // 7. LOGIN CONFIRM
+    function confirmLogin() {
+      const errorEl = document.getElementById('loginError');
+      errorEl.classList.add('hidden');
+
+      let sid = state.pendingSid;
+      let name = state.pendingName;
+
+      if (!sid || !name) {
+        sid = document.getElementById('loginSidInput').value.trim();
+        name = document.getElementById('loginNameInput').value.trim();
+      }
+
+      if (!/^\d{5}$/.test(sid)) {
+        errorEl.innerText = '학번 5자리를 정확히 입력하세요. (예: 30512)';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      if (!name) {
+        errorEl.innerText = '이름을 입력하세요.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+
+      state.sid = sid;
+      state.name = name;
+
+      document.getElementById('loggedInBadge').innerText = `${sid} · ${name}`;
+      const loginView = document.getElementById('loginConfirmView');
+      loginView.classList.remove('flex');
+      loginView.classList.add('hidden');
+      const appView = document.getElementById('appView');
+      appView.classList.remove('hidden');
+      appView.classList.add('flex');
+    }
+
+    // 8. GACHA CORE LOGIC
     function drawCoreWord() {
       const slot = document.getElementById('coreSlot');
       const btn = document.getElementById('drawCoreBtn');
@@ -347,7 +461,7 @@
         document.getElementById('coreRarity').innerText = `난이도: ${result.difficulty} (확률 ${result.weight}%)`;
         document.getElementById('condCore').innerText = result.word;
         document.getElementById('hintBtn').classList.remove('hidden');
-        
+
         btn.innerText = '🎲 다시 뽑기';
         btn.disabled = false;
         checkReadyStatus();
@@ -402,7 +516,7 @@
       }
     }
 
-    // 8. MODAL CONTROLLERS
+    // 9. MODAL CONTROLLERS
     function toggleHintModal() {
       const modal = document.getElementById('hintModal');
       if (modal.classList.contains('hidden')) {
@@ -439,7 +553,7 @@
     function showRewardModal(rewardItem) {
       const modal = document.getElementById('rewardModal');
       const slot = document.getElementById('rewardCardSlot');
-      
+
       slot.innerHTML = `
         <div class="w-28 h-28 mx-auto rounded-2xl bg-amber-100 border-2 border-joseon-gold flex flex-col items-center justify-center shadow-md">
           <span class="text-4xl mb-1">🎁</span>
@@ -460,38 +574,21 @@
       modal.classList.remove('flex');
     }
 
-    // 9. FORM SUBMISSION
+    // 10. FORM SUBMISSION
     function submitWriting() {
-      const sid = document.getElementById('studentId').value.trim();
-      const name = document.getElementById('studentName').value.trim();
       const writing = document.getElementById('writingInput').value.trim();
-
-      if (!sid || sid.length !== 5) {
-        alert('학번 5자리를 정확히 입력하세요. (예: 30512)');
-        document.getElementById('studentId').focus();
-        return;
-      }
-
-      if (!name) {
-        alert('이름을 입력하세요.');
-        document.getElementById('studentName').focus();
-        return;
-      }
 
       if (!writing || writing.length < 10) {
         alert('글쓰기 내용을 최소 10자 이상 작성하세요.');
         return;
       }
 
-      const rewardItem = getRandomArrayItem(GACHA_ITEMS);
-      if (!state.userGallery.includes(rewardItem.id)) {
-        state.userGallery.push(rewardItem.id);
-      }
+      const rewardItem = getWeightedRandomGachaItem();
 
       const payload = {
         gameName: CONFIG.GAME_NAME,
-        sid: sid,
-        name: name,
+        sid: state.sid,
+        name: state.name,
         choicesJson: JSON.stringify({
           coreWord: state.selectedCore.word,
           generalWord: state.selectedGeneral,
@@ -513,26 +610,39 @@
         return;
       }
 
-      fetch(CONFIG.SHEET_WEBAPP_URL, {
+      fetchJsonRetry_(CONFIG.SHEET_WEBAPP_URL, {
         method: 'POST',
         contentType: 'application/json',
         body: JSON.stringify(payload)
       })
-      .then(res => res.json())
       .then(() => {
         finishSubmission(rewardItem);
       })
       .catch(err => {
-        console.error('Submission log error:', err);
-        finishSubmission(rewardItem);
+        console.error('Submission log error (재시도 3회 모두 실패):', err);
+        handleSubmitFailure();
       });
+    }
+
+    // 재시도까지 전부 실패했을 때: 성공한 척 가챠 보상을 주지 않는다.
+    // 기록이 안 남았으니 학생에게 명확히 알리고 다시 제출하게 한다.
+    function handleSubmitFailure() {
+      state.isSubmitting = false;
+      const submitBtn = document.getElementById('submitBtn');
+      alert('제출에 실패했습니다. 네트워크 상태를 확인한 뒤 다시 시도해주세요.');
+      submitBtn.innerText = '📜 글 제출하고 가챠 소품 수집하기';
+      updateSubmitButtonState();
     }
 
     function finishSubmission(rewardItem) {
       state.isSubmitting = false;
+      if (!state.userGallery.includes(rewardItem.id)) {
+        state.userGallery.push(rewardItem.id);
+      }
+
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.innerText = '✅ 제출 완료!';
-      
+
       renderGallery();
       showRewardModal(rewardItem);
 
@@ -541,7 +651,7 @@
       }, 2000);
     }
 
-    // 10. INITIALIZATION (Called safely at the very end to prevent TDZ Errors)
+    // 11. INITIALIZATION (Called safely at the very end to prevent TDZ Errors)
     function init() {
       parseUrlParams();
       renderGallery();
