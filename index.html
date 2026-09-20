@@ -267,16 +267,18 @@
     </div>
   </div>
 
-  <!-- Padlet Modal: 마무리 글쓰기를 반 패들렛에도 옮겨 적게 유도 (webapp-builder 표준) -->
+  <!-- Padlet Modal: 수행평가는 패들렛에 올라간 글로 반영되므로 건너뛸 수 없다 (webapp-builder 표준) -->
   <div id="padletModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
     <div class="bg-joseon-paper rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-2xl border-4 border-joseon-navy text-center">
       <div class="text-xs font-bold text-joseon-navy uppercase tracking-widest">One More Step</div>
-      <h3 class="font-bold text-xl text-joseon-navy font-batang">📌 우리 반 패들렛에도 올려보자</h3>
-      <p class="text-sm text-gray-600 px-2">방금 쓴 글을 복사해서 우리 반 패들렛에 붙여넣어줘.</p>
+      <h3 class="font-bold text-xl text-joseon-navy font-batang">📌 패들렛에 올려야 수행평가에 반영돼요</h3>
+      <p class="text-sm text-gray-600 px-2">지금까지 쓴 글 전체를 복사해서 우리 반 패들렛에 붙여넣어줘.</p>
+
+      <div id="allWritingsPreview" class="text-left text-xs bg-white rounded-lg border border-joseon-border p-3 max-h-32 overflow-y-auto whitespace-pre-wrap leading-relaxed"></div>
 
       <button id="copyWritingBtn" onclick="copyWritingToClipboard()"
               class="w-full py-3 bg-joseon-navy hover:bg-slate-800 text-white font-bold rounded-xl shadow-md active:scale-95 transition min-h-[48px]">
-        📋 내 글 복사하기
+        📋 지금까지 쓴 글 전체 복사하기
       </button>
 
       <a id="openPadletLink" href="#" target="_blank" rel="noopener"
@@ -285,8 +287,9 @@
       </a>
       <p id="padletMissingNote" class="hidden text-xs text-gray-500">담당 반 패들렛 링크를 찾지 못했어요. 선생님께 확인해주세요.</p>
 
-      <button onclick="closePadletModal()" class="w-full py-2 text-sm text-gray-500 font-bold hover:text-gray-700 transition">
-        나중에 할게요
+      <button id="padletDoneBtn" onclick="closePadletModal()" disabled
+              class="w-full py-2.5 rounded-xl font-bold text-sm transition bg-gray-200 text-gray-400 cursor-not-allowed">
+        ✅ 패들렛에 붙여넣었어요
       </button>
     </div>
   </div>
@@ -356,7 +359,7 @@
       isSubmitting: false,
       isPreview: false,
       userGallery: [],
-      lastWriting: ''
+      allWritings: [] // 이번 세션에서 성공적으로 제출한 글 전부 — 패들렛에 한 번에 모아 올리기 위함
     };
 
     // 6. HELPER & UTILITY FUNCTIONS
@@ -644,10 +647,19 @@
       openPadletModal();
     }
 
+    // 세션에서 쓴 글 전부를 번호 매겨 하나로 합친다 — 학생이 라운드마다 따로
+    // 복사/붙여넣기 하지 않고 마지막에 한 번만 패들렛에 올리면 되게.
+    function buildCombinedWritingText_() {
+      return state.allWritings.map((r, i) => {
+        return `${i + 1}. [${r.coreWord} / ${r.generalWord}]\n${r.writing}`;
+      }).join('\n\n');
+    }
+
     function openPadletModal() {
       const modal = document.getElementById('padletModal');
       const link = document.getElementById('openPadletLink');
       const missingNote = document.getElementById('padletMissingNote');
+      const doneBtn = document.getElementById('padletDoneBtn');
       const url = getPadletUrlForSid_(state.sid);
 
       link.classList.remove('hidden', 'flex');
@@ -660,7 +672,13 @@
         missingNote.classList.remove('hidden');
       }
 
-      document.getElementById('copyWritingBtn').innerText = '📋 내 글 복사하기';
+      document.getElementById('allWritingsPreview').innerText = buildCombinedWritingText_();
+      document.getElementById('copyWritingBtn').innerText = `📋 지금까지 쓴 글 전체 복사하기 (${state.allWritings.length}개)`;
+
+      // 복사를 실제로 누르기 전엔 닫을 수 없게 잠근다 — "나중에 할게요"로
+      // 건너뛰던 걸 없애고, 패들렛에 올리는 걸 실질적으로 강제하기 위함.
+      doneBtn.disabled = true;
+      doneBtn.className = 'w-full py-2.5 rounded-xl font-bold text-sm transition bg-gray-200 text-gray-400 cursor-not-allowed';
 
       modal.classList.remove('hidden');
       modal.classList.add('flex');
@@ -672,14 +690,24 @@
       modal.classList.remove('flex');
     }
 
+    function unlockPadletDoneBtn_() {
+      const doneBtn = document.getElementById('padletDoneBtn');
+      doneBtn.disabled = false;
+      doneBtn.className = 'w-full py-2.5 rounded-xl font-bold text-sm transition bg-joseon-navy text-white hover:bg-slate-800 active:scale-95';
+    }
+
     function copyWritingToClipboard() {
       const btn = document.getElementById('copyWritingBtn');
-      copyToClipboard_(state.lastWriting)
+      const combined = buildCombinedWritingText_();
+      copyToClipboard_(combined)
         .then(() => {
           btn.innerText = '✅ 복사 완료! 패들렛에 붙여넣기 하세요';
+          unlockPadletDoneBtn_();
         })
         .catch(() => {
-          alert('복사에 실패했습니다. 아래 글을 직접 선택해서 복사해주세요:\n\n' + state.lastWriting);
+          alert('복사에 실패했습니다. 아래 글을 직접 선택해서 복사해주세요:\n\n' + combined);
+          // 클립보드 권한이 막힌 기기도 있어서, 복사가 실패해도 진행은 막지 않는다.
+          unlockPadletDoneBtn_();
         });
     }
 
@@ -692,7 +720,11 @@
         return;
       }
 
-      state.lastWriting = writing;
+      const roundData = {
+        coreWord: state.selectedCore.word,
+        generalWord: state.selectedGeneral,
+        writing: writing
+      };
       const rewardItem = getWeightedRandomGachaItem();
 
       const payload = {
@@ -700,8 +732,8 @@
         studentId: state.sid,
         studentName: state.name,
         choicesJson: JSON.stringify({
-          coreWord: state.selectedCore.word,
-          generalWord: state.selectedGeneral,
+          coreWord: roundData.coreWord,
+          generalWord: roundData.generalWord,
           writing: writing,
           gachaImageId: rewardItem.id
         })
@@ -715,7 +747,7 @@
       if (state.isPreview) {
         setTimeout(() => {
           alert('미리보기 모드(?preview=1)로 실제 DB 저장 없이 동작했습니다.');
-          finishSubmission(rewardItem);
+          finishSubmission(rewardItem, roundData);
         }, 400);
         return;
       }
@@ -726,7 +758,7 @@
         body: JSON.stringify(payload)
       })
       .then(() => {
-        finishSubmission(rewardItem);
+        finishSubmission(rewardItem, roundData);
       })
       .catch(err => {
         console.error('Submission log error (재시도 3회 모두 실패):', err);
@@ -767,8 +799,9 @@
       document.getElementById('charCount').innerText = '0자 작성됨';
     }
 
-    function finishSubmission(rewardItem) {
+    function finishSubmission(rewardItem, roundData) {
       state.isSubmitting = false;
+      state.allWritings.push(roundData);
       if (!state.userGallery.includes(rewardItem.id)) {
         state.userGallery.push(rewardItem.id);
       }
