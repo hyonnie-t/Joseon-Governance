@@ -229,7 +229,7 @@
 
     <!-- Footer -->
     <footer class="mt-6 text-center text-xs text-gray-500 py-3">
-      history26 포털 표준 규격 · 조선 통치체제와 대외 관계 마무리 차시
+      조선의 성립과 발전 · 조선 통치체제와 대외 관계 마무리 차시
     </footer>
 
   </div>
@@ -697,8 +697,8 @@
 
       const payload = {
         gameName: CONFIG.GAME_NAME,
-        sid: state.sid,
-        name: state.name,
+        studentId: state.sid,
+        studentName: state.name,
         choicesJson: JSON.stringify({
           coreWord: state.selectedCore.word,
           generalWord: state.selectedGeneral,
@@ -744,6 +744,29 @@
       updateSubmitButtonState();
     }
 
+    // 제출 한 번 끝났다고 활동을 끝낸 게 아니다 — 12개 도감을 채우려면 여러 번
+    // 다시 뽑고 다시 써야 하므로, 다음 라운드를 바로 시작할 수 있게 초기화한다.
+    function resetRoundState_() {
+      state.selectedCore = null;
+      state.selectedGeneral = null;
+
+      document.getElementById('coreSlot').innerHTML = '<p class="text-gray-400 text-sm">버튼을 눌러 핵심 단어를 뽑으세요</p>';
+      document.getElementById('coreRarity').innerText = '뽑기 대기 중';
+      document.getElementById('drawCoreBtn').innerText = '🎲 핵심 단어 뽑기';
+      document.getElementById('hintBtn').classList.add('hidden');
+      document.getElementById('condCore').innerText = '';
+
+      document.getElementById('generalSlot').innerHTML = '<p class="text-gray-400 text-sm">버튼을 눌러 일반 단어를 뽑으세요</p>';
+      document.getElementById('drawGeneralBtn').innerText = '🎲 일반 단어 뽑기';
+      document.getElementById('condGeneral').innerText = '';
+
+      const textarea = document.getElementById('writingInput');
+      textarea.value = '';
+      textarea.disabled = true;
+      textarea.placeholder = '단어 2개를 모두 뽑은 후에 작성해 주세요.';
+      document.getElementById('charCount').innerText = '0자 작성됨';
+    }
+
     function finishSubmission(rewardItem) {
       state.isSubmitting = false;
       if (!state.userGallery.includes(rewardItem.id)) {
@@ -755,9 +778,15 @@
 
       renderGallery();
       showRewardModal(rewardItem);
+      resetRoundState_();
 
+      // isSubmitting은 이미 위에서 false로 풀었지만, "제출 완료" 문구를 2초간
+      // 보여주는 동안은 버튼을 그대로 잠가둔다. 2초 뒤 라벨을 원래대로 되돌리고
+      // updateSubmitButtonState()로 다음 라운드 기준(단어 2개 재선택 전까지 비활성)에
+      // 맞게 disabled/스타일을 다시 계산한다 — 이게 빠져 있어서 두 번째 제출이 막혀 있었다.
       setTimeout(() => {
-        submitBtn.innerText = '📜 글 제출하기';
+        submitBtn.innerText = '📜 글 제출하고 가챠 소품 수집하기';
+        updateSubmitButtonState();
       }, 2000);
     }
 
