@@ -934,6 +934,10 @@
         gameName: CONFIG.GAME_NAME,
         studentId: state.sid,
         studentName: state.name,
+        // 백엔드는 최상위 reflection → '학생 서술'(G열)에 기록하고 AI 분석도 그 열만 읽는다.
+        // choicesJson 안에만 글을 넣으면 G열이 비어 AI 분석에서 빠졌다.
+        choiceSummary: roundData.coreWord + ' / ' + roundData.generalWord,
+        reflection: writing,
         choicesJson: JSON.stringify({
           coreWord: roundData.coreWord,
           generalWord: roundData.generalWord,
